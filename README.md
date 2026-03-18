@@ -5,13 +5,13 @@
 A simple and beautiful terminal-based application which generates scrambles for your Rubik's Cube and runs the timer for your solves, storing your times and the scrambles in a file.
 
 ### Scramble in BIG letters
-![Scramble](assets/Screenshot From 2026-03-17 20-01-28.png)
+![Scramble](assets/Screenshot%20From%202026-03-17%2020-01-28.png)
 
 ### Timer, colored and BIG
-![Timer](assets/Screenshot From 2026-03-17 20-02-23.png)
+![Timer](assets/Screenshot%20From%202026-03-17%2020-02-23.png)
 
 ### The results
-![Results](assets/Screenshot From 2026-03-17 20-03-14.png)
+![Results](assets/Screenshot%20From%202026-03-17%2020-03-14.png)
 
 
 ## Requirements
