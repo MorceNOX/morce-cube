@@ -218,7 +218,7 @@ do
             direction="${DIRECTIONS[$n]}"
         done
 
-        if [ $i -gt 1 ]; then
+        if [ $i -ge 1 ]; then
             prev_prev_dir="$prev_dir"
         fi
 
