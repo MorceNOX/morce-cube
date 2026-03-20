@@ -22,7 +22,15 @@ ascii-image-converter -C assets/cube.png
 sleep 3
 
 SCRAMBLE_FILE="data/scrambles.txt"
-N_SCRAMBLES=50
+TIMES_FILE="data/times.txt"
+
+N_SCRAMBLES=20
+N_TIMES=100
+
+DATA_DIR="data"
+DB_FILE="$DATA_DIR"/sessions.db
+
+
 
 DIRECTIONS=( "B" "D" "F" "L" "R" "U" )
 OPPOSITE_DIR=( "F" "U" "B" "R" "L" "D" )
@@ -198,6 +206,56 @@ calc_ao() {
 }
 
 
+calc_ao_50() {
+    local n=$1
+    shift
+    local arr=("$@")
+
+    if [ ${#arr[@]} -eq 0 ]; then
+        echo 0
+        return
+    fi
+
+    if [ ${#arr[@]} -lt 50 ]; then
+        calc_ao ${#arr[@]} ${arr[@]}
+        return
+    fi
+
+    # Take the last n elements
+    local last_n=()
+    local start_idx=$(( ${#arr[@]} - n ))
+    if [ $start_idx -lt 0 ]; then
+        start_idx=0
+    fi
+
+    for (( i = start_idx; i < ${#arr[@]}; i++ )); do
+        last_n+=("${arr[$i]}")
+    done
+
+   # Sort the last n elements
+    local sorted_arr=( $(printf "%s\n" "${last_n[@]}" | sort -n) )
+
+    # Remove min and max (first and last elements)
+    local sum=0
+    local count=0
+    local middle_start=3
+    local middle_end=$(( ${#sorted_arr[@]} - 4 ))
+
+    # Average the middle elements
+    for (( i = middle_start; i <= middle_end; i++ )); do
+        sum=$(( sum + ${sorted_arr[$i]} ))
+        count=$(( count + 1 ))
+    done
+
+    # Calculate average
+    if [ $count -gt 0 ]; then
+        local avg=$(( sum / count ))
+        echo $avg
+    else
+        echo 0
+    fi
+}
+
 
 while :
 do
@@ -330,15 +388,22 @@ do
     echo -e "\rYour time: \tScramble: "
     create_boxes "$str_time" "$scramble"
 
-    ao+=( $elapsed_ns )
+    ao+=( $elapsed_ns )    
 
     ao5=$(calc_ao 5 "${ao[@]}")
     ao12=$(calc_ao 12 "${ao[@]}")
+
+    if [ ${#ao[@]} -ge 50 ]; then
+        ao50=$(calc_ao_50 50 "${ao[@]}")
+    fi
 
     echo "Average time for this session:"
     echo
     printf " ao5: (%#2d) %s\n" $(min 5 ${#ao[@]}) "$(get_strtime "$ao5")"
     printf "ao12: (%#2d) %s\n" $(min 12 ${#ao[@]}) "$(get_strtime "$ao12")"
+    if [ ${#ao[@]} -ge 50 ]; then
+        printf "ao50: (%#2d) %s\n" $(min 50 ${#ao[@]}) "$(get_strtime "$ao50")"
+    fi    
 
     echo
     read -p "Save this scramble? (Y/n)" -r -e s
@@ -355,6 +420,15 @@ do
     echo -en "\\033[1A\\033[2K"
 
     if $SAVE_SCRAMBLE; then
+
+        temp_times_file=$(mktemp)
+        echo $elapsed_ns > $temp_times_file
+
+        if [[ -f "$TIMES_FILE" ]]; then
+            head -n $(( N_TIMES - 1 )) "$TIMES_FILE" >> "$temp_times_file"
+        fi
+
+
         # Add to rotating file
         # First, create a temporary file with new scramble at the top
         temp_file=$(mktemp)
@@ -367,6 +441,19 @@ do
 
         # Move temporary file to final location
         mv "$temp_file" "$SCRAMBLE_FILE"
+        mv "$temp_times_file" "$TIMES_FILE"
+    fi
+
+    if [[ -f "$TIMES_FILE" ]]; then
+        
+        IFS=$'\n'
+        arr_times=( $(cat $TIMES_FILE) )
+
+        n_times="${#arr_times[@]}"
+        n_avg=$(calc_ao $n_times "${arr_times[@]}")
+        
+        printf " Average Of %#2d: %s\n" $n_times "$(get_strtime "$n_avg")"
+        echo
     fi
 
     if [[ -f "$SCRAMBLE_FILE" ]]; then
@@ -394,10 +481,6 @@ do
     echo
 
     read -p "Enter any value to continue, or 's' to list, 'q' to exit... " -r -e k
-
-    if [[ x"${k,,}" == x"q" ]]; then
-        break
-    fi
 
     case "${k,,}" in
         s) 
