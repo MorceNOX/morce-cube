@@ -322,22 +322,24 @@ do
     ao5=$(calc_ao 5 "${ao[@]}")
     ao12=$(calc_ao 12 "${ao[@]}")
 
+    echo "Average time for this session:"
+    echo
     printf " ao5: (%#2d) %s\n" $(min 5 ${#ao[@]}) "$(get_strtime "$ao5")"
     printf "ao12: (%#2d) %s\n" $(min 12 ${#ao[@]}) "$(get_strtime "$ao12")"
 
+    echo
     read -p "Save this scramble? (Y/n)" -r -e s
-
-    SAVE_SCRAMBLE=true
 
     case "${s,,}" in
         *n | no)
           SAVE_SCRAMBLE=false
           ;;
         *)
+          SAVE_SCRAMBLE=true
           ;;
     esac
 
-    echo -e "\\033[1A\\033[2K"
+    echo -en "\\033[1A\\033[2K"
 
     if $SAVE_SCRAMBLE; then
         # Add to rotating file
@@ -356,7 +358,7 @@ do
 
     if [[ -f "$SCRAMBLE_FILE" ]]; then
         # Show the contents of the file
-        echo -e "\rLast 15 scrambles:           "
+        echo -e "\rLast 12 scrambles:           "
         echo      "─────────────────────────────────────────────────────────────────────────────────────────────────────────────"
 
         black=false
@@ -371,7 +373,7 @@ do
 
             printf "%s\n" "$line"
 
-        done < <(head -n 15 "$SCRAMBLE_FILE" | nl)
+        done < <(head -n 12 "$SCRAMBLE_FILE" | nl)
     fi
 
     echo -en "\e[0m"
@@ -380,7 +382,7 @@ do
 
     read -p "Enter any value to continue, or 's' to list, 'q' to exit... " -r -e k
 
-    if [ x"${k,,}" == x"q" ]; then
+    if [[ x"${k,,}" == x"q" ]]; then
         break
     fi
 
@@ -389,6 +391,9 @@ do
           if [[ -f "$SCRAMBLE_FILE" ]]; then
               cat -n "$SCRAMBLE_FILE" | sed G | less -R
           fi
+          ;;
+        *q)
+          break
           ;;
         *)
           continue
