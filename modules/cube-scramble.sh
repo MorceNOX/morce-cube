@@ -29,6 +29,9 @@ MODIFIERS=( " " "´" "2" )
 
 KEYPRESS_TIMEOUT=0.02
 
+LOAD_SAVED=false
+ao=()
+
 
 random() {
     local div=$1
@@ -88,6 +91,97 @@ create_boxes() {
     done
     echo
 }
+
+
+get_strtime() {
+    local nanoseconds=$1
+
+    local seconds=$((nanoseconds / 1000000000))
+    local minutes=$(( seconds / 60 % 60 ))
+    local milliseconds=$(( (nanoseconds % 1000000000) / 1000000 ))
+
+    local str_time="$(printf "%#4d:%02d%s%03d" "$minutes" "$((seconds % 60 ))" "$ds" "$milliseconds")"
+
+    echo "$str_time"
+
+}
+
+min() {
+  local a=$1
+  local b=$2
+  (( a <= b )) && echo "$a" || echo "$b"
+}
+
+max() {
+  local a=$1
+  local b=$2
+  (( a >= b )) && echo "$a" || echo "$b"
+}
+
+calc_ao() {
+    local n=$1
+    shift
+    local arr=("$@")
+
+    if [ ${#arr[@]} -eq 0 ]; then
+        echo 0
+        return
+    fi
+
+    # Take the last n elements
+    local last_n=()
+    local start_idx=$(( ${#arr[@]} - n ))
+    if [ $start_idx -lt 0 ]; then
+        start_idx=0
+    fi
+
+    for (( i = start_idx; i < ${#arr[@]}; i++ )); do
+        last_n+=("${arr[$i]}")
+    done
+
+    # If we don't have enough elements to remove min and max, return normal average
+    if [ ${#last_n[@]} -lt 3 ]; then
+        # Calculate normal average for all elements
+        local sum=0
+        local count=0
+        for (( i = 0; i < ${#last_n[@]}; i++ )); do
+            sum=$(( sum + ${last_n[$i]} ))
+            count=$(( count + 1 ))
+        done
+        
+        if [ $count -gt 0 ]; then
+            local avg=$(( sum / count ))
+            echo $avg
+        else
+            echo 0
+        fi
+        return
+    fi
+
+    # Sort the last n elements
+    local sorted_arr=( $(printf "%s\n" "${last_n[@]}" | sort -n) )
+
+    # Remove min and max (first and last elements)
+    local sum=0
+    local count=0
+    local middle_start=1
+    local middle_end=$(( ${#sorted_arr[@]} - 2 ))
+
+    # Average the middle elements
+    for (( i = middle_start; i <= middle_end; i++ )); do
+        sum=$(( sum + ${sorted_arr[$i]} ))
+        count=$(( count + 1 ))
+    done
+
+    # Calculate average
+    if [ $count -gt 0 ]; then
+        local avg=$(( sum / count ))
+        echo $avg
+    else
+        echo 0
+    fi
+}
+
 
 
 while :
@@ -193,11 +287,7 @@ do
         current_time=$(date +%s%N)
         elapsed_ns=$((current_time - start_time))
 
-        seconds=$((elapsed_ns / 1000000000))
-        minutes=$(( seconds / 60 % 60 ))
-        milliseconds=$(( (elapsed_ns % 1000000000) / 1000000 ))
-
-        str_time="$(printf "%#4d:%02d%s%03d" "$minutes" "$((seconds % 60 ))" "$ds" "$milliseconds")"
+        str_time="$(get_strtime "$elapsed_ns")"
 
         clear
         echo -en "\e[32m"
@@ -213,18 +303,19 @@ do
     clear
     ./modules/print_numbers.sh "$str_time"
 
-    # echo -en "\e[0m"
-    # echo "Stopped! Your time is: "
-    # create_box "$str_time"
-    # echo
-    # echo For this scramble:
-    # create_box "$scramble"
-
     echo -en "\e[0m"
     echo -en "Stopped!"
     sleep 1
     echo -e "\rYour time: \tScramble: "
     create_boxes "$str_time" "$scramble"
+
+    ao+=( $elapsed_ns )
+
+    ao5=$(calc_ao 5 "${ao[@]}")
+    ao12=$(calc_ao 12 "${ao[@]}")
+
+    printf " ao5: (%#2d) %s\n" $(min 5 ${#ao[@]}) "$(get_strtime "$ao5")"
+    printf "ao12: (%#2d) %s\n" $(min 12 ${#ao[@]}) "$(get_strtime "$ao12")"
 
     read -p "Save this scramble? (Y/n)" -r -e s
 
