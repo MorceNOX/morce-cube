@@ -120,6 +120,30 @@ max() {
   (( a >= b )) && echo "$a" || echo "$b"
 }
 
+calculate_average() {
+    local arr=("$@")
+    
+    if [ ${#arr[@]} -eq 0 ]; then
+        echo 0
+        return
+    fi
+    
+    local sum=0
+    local count=0
+    
+    for (( i = 0; i < ${#arr[@]}; i++ )); do
+        sum=$(( sum + ${arr[$i]} ))
+        count=$(( count + 1 ))
+    done
+    
+    if [ $count -gt 0 ]; then
+        local avg=$(( sum / count ))
+        echo $avg
+    else
+        echo 0
+    fi
+}
+
 calc_ao() {
     local n=$1
     shift
@@ -144,19 +168,8 @@ calc_ao() {
     # If we don't have enough elements to remove min and max, return normal average
     if [ ${#last_n[@]} -lt 3 ]; then
         # Calculate normal average for all elements
-        local sum=0
-        local count=0
-        for (( i = 0; i < ${#last_n[@]}; i++ )); do
-            sum=$(( sum + ${last_n[$i]} ))
-            count=$(( count + 1 ))
-        done
-        
-        if [ $count -gt 0 ]; then
-            local avg=$(( sum / count ))
-            echo $avg
-        else
-            echo 0
-        fi
+        local avg=$(calculate_average "${last_n[@]}")
+        echo $avg
         return
     fi
 
