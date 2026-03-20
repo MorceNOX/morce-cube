@@ -13,7 +13,7 @@ Every movement is at the same time randomic and well calculated. Every single mo
 ![Timer](assets/Screenshot%20From%202026-03-17%2020-02-23.png)
 
 ### The results
-![Results](assets/Screenshot%20From%202026-03-17%2020-03-14.png)
+![Results](assets/Screenshot%20From%202026-03-20%2001-36-41.png)
 
 
 ## Requirements
