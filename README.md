@@ -4,6 +4,8 @@
 
 A simple and beautiful terminal-based application which generates scrambles for your Rubik's Cube and runs the timer for your solves, storing your times and the scrambles in a file.
 
+Every movement is at the same time randomic and well calculated. Every single movement here makes sense and contributes to a very good generated scramble. Just have a try and be amazed!
+
 ### Scramble in BIG letters
 ![Scramble](assets/Screenshot%20From%202026-03-17%2020-01-28.png)
 
