@@ -25,6 +25,8 @@ SCRAMBLE_FILE="data/scrambles.txt"
 N_SCRAMBLES=50
 
 DIRECTIONS=( "B" "D" "F" "L" "R" "U" )
+OPPOSITE_DIR=( "F" "U" "B" "R" "L" "D" )
+
 MODIFIERS=( " " "´" "2" )
 
 KEYPRESS_TIMEOUT=0.02
@@ -188,6 +190,7 @@ while :
 do
     clear
 
+    prev_prev_dir=""
     prev_dir=""
     MOVEMENTS=( {0..19} )
     FMT_TIMESTAMP=$(LC_TIME="en_GB.UTF-8" date +%4Y-%m-%d_%H:%M:%S)
@@ -196,10 +199,15 @@ do
         n=$(random "${#DIRECTIONS[@]}")
         direction="${DIRECTIONS[$n]}"
 
-        while [[ "$direction" == "$prev_dir" ]]; do
+        while [[ "$direction" == "$prev_dir" ]] ||
+              [[ "$direction" == "$prev_prev_dir" && "$prev_dir" == ${OPPOSITE_DIR[$n]} ]]; do
             n=$(random "${#DIRECTIONS[@]}")
             direction="${DIRECTIONS[$n]}"
         done
+
+        if [ $i -gt 1 ]; then
+            prev_prev_dir="$prev_dir"
+        fi
 
         prev_dir="$direction"
 
